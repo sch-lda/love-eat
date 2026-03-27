@@ -73,10 +73,52 @@ final_df <- coords %>%
 
 # 8. 绘图
 cat("正在绘制PCoA图...\n")
+# 8.1 置信椭圆参数与诊断
+ellipse_level <- 0.95
+ellipse_type <- "norm" # 与统计诊断一致的椭圆类型
+
+compute_ellipse_coverage <- function(df, level) {
+  n <- nrow(df)
+  if (n < 3) {
+    return(data.frame(total = n, inside = NA_integer_, outside = NA_integer_, note = "样本数<3", stringsAsFactors = FALSE))
+  }
+  coords <- df[, c("PCoA1", "PCoA2")]
+  if (anyNA(coords)) {
+    return(data.frame(total = n, inside = NA_integer_, outside = NA_integer_, note = "含NA", stringsAsFactors = FALSE))
+  }
+  cov_mat <- stats::cov(coords)
+  if (any(!is.finite(cov_mat)) || det(cov_mat) <= 0) {
+    return(data.frame(total = n, inside = NA_integer_, outside = NA_integer_, note = "协方差不可逆", stringsAsFactors = FALSE))
+  }
+  md2 <- stats::mahalanobis(coords, colMeans(coords), cov_mat)
+  cutoff <- stats::qchisq(level, df = 2)
+  inside <- sum(md2 <= cutoff)
+  outside <- n - inside
+  data.frame(total = n, inside = inside, outside = outside, note = "OK", stringsAsFactors = FALSE)
+}
+
+coverage_stats <- do.call(
+  rbind,
+  lapply(split(final_df, final_df$Group, drop = TRUE), function(df) {
+    stats_row <- compute_ellipse_coverage(df, ellipse_level)
+    stats_row$Group <- unique(df$Group)
+    stats_row
+  })
+)
+coverage_stats <- coverage_stats[, c("Group", "inside", "total", "outside", "note")]
+
+cat("置信椭圆诊断 (level = ", ellipse_level, ", type = ", ellipse_type, "):\n", sep = "")
+print(coverage_stats, row.names = FALSE)
+cat(
+  "说明：置信椭圆是基于正态分布假设的覆盖区域，level=0.95 表示期望约 95% 的样本点落在椭圆内，\n",
+  "因此出现少量点在椭圆外是正常现象。若需要“包含所有点”的边界，可考虑凸包或提高 level。\n",
+  sep = ""
+)
+
 p <- ggplot(final_df, aes(x = PCoA1, y = PCoA2, color = Group, label = Sample)) +
   geom_point(size = 4, alpha = 0.8) +
   # 添加置信椭圆（置信圈）
-  stat_ellipse(aes(group = Group), level = 0.95, linetype = "dashed") +
+  stat_ellipse(aes(group = Group), level = ellipse_level, type = ellipse_type, linetype = "dashed") +
   geom_text(aes(label = Sample), vjust = -0.5, size = 3) + # 样本标签在点上方
   scale_color_viridis_d(option = "Set3") + # 使用更美观的颜色
   theme_minimal() +
