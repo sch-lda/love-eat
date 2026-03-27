@@ -97,13 +97,14 @@ compute_ellipse_coverage <- function(df, level) {
   data.frame(total = n, inside = inside, outside = outside, note = "OK", stringsAsFactors = FALSE)
 }
 
+grouped_samples <- split(final_df, final_df$Group, drop = TRUE)
 coverage_stats <- do.call(
   rbind,
-  lapply(split(final_df, final_df$Group, drop = TRUE), function(df) {
+  Map(function(group_name, df) {
     stats_row <- compute_ellipse_coverage(df, ellipse_level)
-    stats_row$Group <- unique(df$Group)
+    stats_row$Group <- group_name
     stats_row
-  })
+  }, names(grouped_samples), grouped_samples)
 )
 coverage_stats <- coverage_stats[, c("Group", "inside", "total", "outside", "note")]
 
