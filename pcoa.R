@@ -74,9 +74,14 @@ final_df <- coords %>%
 # 8. 绘图
 cat("正在绘制PCoA图...\n")
 p <- ggplot(final_df, aes(x = PCoA1, y = PCoA2, color = Group, label = Sample)) +
+# --- 核心：使用 ggforce 画置信圈 ---
+  # geom_mark_ellipse 比 stat_ellipse 更适合小样本，且有膨胀效果
+  geom_mark_ellipse(aes(fill = Group, color = Group, group = Group),
+                    alpha = 0.1,           # 圈内透明度
+                    expand = unit(1, "mm"), # 边缘向外膨胀 1mm，防止圈太紧
+                    show.legend = FALSE) +  # 不显示圈的图例 (避免重复)
   geom_point(size = 4, alpha = 0.8) +
-  # 添加置信椭圆（置信圈）
-  stat_ellipse(aes(group = Group), level = 0.95, linetype = "dashed") +
+
   geom_text(aes(label = Sample), vjust = -0.5, size = 3) + # 样本标签在点上方
   scale_color_viridis_d(option = "Set3") + # 使用更美观的颜色
   theme_minimal() +
