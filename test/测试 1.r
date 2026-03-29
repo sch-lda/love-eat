@@ -1,7 +1,7 @@
 # 1. 清空环境并加载必要的包
 rm(list = ls())
 # 自动安装并加载必要的包
-required_packages <- c("readxl", "vegan", "ggplot2", "dplyr")
+required_packages <- c("readxl", "vegan", "ggplot2", "dplyr", "ggforce")
 new_packages <- required_packages[!(required_packages %in% installed.packages()[,"Package"])]
 if(length(new_packages)) install.packages(new_packages, repos = "https://cloud.r-project.org")
 
@@ -86,14 +86,14 @@ p <- ggplot(final_df, aes(x = PCoA1, y = PCoA2, color = Group, label = Sample)) 
 
   #geom_text(aes(label = Sample), vjust = -0.5, size = 3) + # 样本标签在点上方
   scale_color_viridis_d(option = "Set3") + # 使用更美观的颜色
-  theme_minimal() +
-  # 去除所有网格线，仅保留边框和0刻度线
+  theme_bw() +
   theme(
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
-    panel.border = element_blank(),
-    plot.title = element_text(hjust = 0.5, size = 14),
+    panel.border = element_rect(color = "black", fill = NA, size = 1),
+    axis.text = element_text(color = "black", size = 10),
     axis.title = element_text(size = 12),
+    plot.title = element_text(hjust = 0.5, size = 14),
     legend.position = "right"
   ) +
   labs(
@@ -101,11 +101,6 @@ p <- ggplot(final_df, aes(x = PCoA1, y = PCoA2, color = Group, label = Sample)) 
     x = paste0("PCoA 1 (", pct[1], "%)"),
     y = paste0("PCoA 2 (", pct[2], "%)"),
     color = "Group"
-  ) +
-  theme(
-    plot.title = element_text(hjust = 0.5, size = 14),
-    axis.title = element_text(size = 12),
-    legend.position = "right"
   ) +
   # 添加网格线辅助观察
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray80") +

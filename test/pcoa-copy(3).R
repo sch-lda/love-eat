@@ -1,7 +1,7 @@
 # 1. 清空环境并加载必要的包
 rm(list = ls())
 # 自动安装并加载必要的包
-required_packages <- c("readxl", "vegan", "ggplot2", "dplyr", "ggforce")
+required_packages <- c("readxl", "vegan", "ggplot2", "dplyr")
 new_packages <- required_packages[!(required_packages %in% installed.packages()[,"Package"])]
 if(length(new_packages)) install.packages(new_packages, repos = "https://cloud.r-project.org")
 
@@ -11,19 +11,10 @@ library(ggplot2)  # 绘图
 library(dplyr)    # 数据处理
 library(ggforce)
 
-# 2. 设置文件路径 (请将文件放在工作目录下，或写完整路径)
-#meta_file <- "./h1.xlsx"   # 包含 Site 和 Group 信息
-#otu_file  <- "./h2.xlsx"   # 包含 Taxonomy 和 丰度信息
-# 请确保你的文件名为 "combined_data.xlsx" 或修改下面的文件名
-# Sheet1 应该包含 Site 和 Group 信息 (原 h1.xlsx 的内容)
-# Sheet2 应该包含 Taxonomy 和 丰度信息 (原 h2.xlsx 的内容)
-combined_file <- "./h1yuanshiturangxijunchouping(1).xlsx" 
-# 3. 读取数据
-cat("正在读取数据...\n")
-# 修改点：使用 sheet 参数指定读取第1个表单
-meta_data <- read_excel(combined_file, sheet = 2) 
-# 修改点：使用 sheet 参数指定读取第2个表单
-otu_data  <- read_excel(combined_file, sheet = 1) 
+# 2. 设置文件路径 (请将文件放在工作目录下，或写完整路径)D:/R/love-eat/test/h1yuanshiturangxijunchouping(1)
+meta_data <- read_excel(".xlsx",sheet = 2)   # 包含 Site 和 Group 信息
+otu_data  <- read_excel("D:/R/love-eat/test/h1yuanshiturangxijunchouping(1).xlsx",sheet = 1)   # 包含 Taxonomy 和 丰度信息
+
 
 # 4. 数据预处理 (关键步骤)
 # 4.1 处理OTU表 (侯2.xlsx)
@@ -80,39 +71,27 @@ final_df <- coords %>%
 # 8. 绘图
 cat("正在绘制PCoA图...\n")
 p <- ggplot(final_df, aes(x = PCoA1, y = PCoA2, color = Group, label = Sample)) +
-# --- 核心：使用 ggforce 画置信圈 ---
-  # geom_mark_ellipse 比 stat_ellipse 更适合小样本，且有膨胀效果
-  geom_mark_ellipse(aes(fill = Group, color = Group, group = Group),
-                    alpha = 0.1,           # 圈内透明度
-                    label.margin = margin(200, 200, 200, 200, "cm"), 
-                   
-                    show.legend = FALSE) +  # 不显示圈的图例 (避免重复)
-  geom_point(size = 2, alpha = 0.8) +
-
-  #geom_text(aes(label = Sample), vjust = -0.5, size = 3) + # 样本标签在点上方
+  geom_point(size = 4, alpha = 0.8) +
+  geom_mark_ellipse() +
+  geom_text(aes(label = Sample), vjust = -0.5, size = 3) + # 样本标签在点上方
   scale_color_viridis_d(option = "Set3") + # 使用更美观的颜色
-  theme_bw() +
-  theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_rect(color = "black", fill = NA, size = 1),
-    axis.text = element_text(color = "black", size = 10),
-    axis.title = element_text(size = 12),
-    plot.title = element_text(hjust = 0.5, size = 14),
-    legend.position = "right"
-  ) +
+  theme_minimal() +
   labs(
     title = "PCoA Plot (Bray-Curtis Distance)",
     x = paste0("PCoA 1 (", pct[1], "%)"),
     y = paste0("PCoA 2 (", pct[2], "%)"),
     color = "Group"
   ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14),
+    axis.title = element_text(size = 12),
+    legend.position = "right"
+  ) +
   # 添加网格线辅助观察
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray80") +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray80") +
-  expand_limits(x = range(final_df$PCoA1) + c(-0.01, 0.05),
-                y = range(final_df$PCoA2) + c(-0.01, 0.05))
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray80")
 
+print(p)
 
 # 9. (可选) 保存图片
 ggsave("PCoA_Result.png", plot = p, width = 10, height = 8, dpi = 300)
