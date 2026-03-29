@@ -9,10 +9,11 @@ library(readxl)   # 读取Excel
 library(vegan)    # 计算距离和PCoA
 library(ggplot2)  # 绘图
 library(dplyr)    # 数据处理
+library(ggforce)
 
 # 2. 设置文件路径 (请将文件放在工作目录下，或写完整路径)
-meta_file <- "./h5.xlsx"   # 包含 Site 和 Group 信息
-otu_file  <- "./h6.xlsx"   # 包含 Taxonomy 和 丰度信息
+meta_file <- "./h1.xlsx"   # 包含 Site 和 Group 信息
+otu_file  <- "./h2.xlsx"   # 包含 Taxonomy 和 丰度信息
 
 # 3. 读取数据
 cat("正在读取数据...\n")
@@ -74,16 +75,27 @@ final_df <- coords %>%
 # 8. 绘图
 cat("正在绘制PCoA图...\n")
 p <- ggplot(final_df, aes(x = PCoA1, y = PCoA2, color = Group, label = Sample)) +
-  # --- 核心：使用 ggforce 画置信圈 ---
-  geom_mark_ellipse(aes(fill = Group, group = Group),
-                    alpha = 0.1, label.margin = margin(200, 200, 200, 200, "cm"), 
-                    expand = unit(1, "mm"),
-                    show.legend = FALSE) +
+# --- 核心：使用 ggforce 画置信圈 ---
+  # geom_mark_ellipse 比 stat_ellipse 更适合小样本，且有膨胀效果
+  geom_mark_ellipse(aes(fill = Group, color = Group, group = Group),
+                    alpha = 0.1,           # 圈内透明度
+                    label.margin = margin(200, 200, 200, 200, "cm"), 
+                    expand = unit(1, "mm"), # 边缘向外膨胀 1mm，防止圈太紧
+                    show.legend = FALSE) +  # 不显示圈的图例 (避免重复)
   geom_point(size = 4, alpha = 0.8) +
 
   #geom_text(aes(label = Sample), vjust = -0.5, size = 3) + # 样本标签在点上方
   scale_color_viridis_d(option = "Set3") + # 使用更美观的颜色
   theme_minimal() +
+  # 去除所有网格线，仅保留边框和0刻度线
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 14),
+    axis.title = element_text(size = 12),
+    legend.position = "right"
+  ) +
   labs(
     title = "PCoA Plot (Bray-Curtis Distance)",
     x = paste0("PCoA 1 (", pct[1], "%)"),

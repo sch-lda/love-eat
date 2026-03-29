@@ -9,6 +9,7 @@ library(readxl)   # 读取Excel
 library(vegan)    # 计算距离和PCoA
 library(ggplot2)  # 绘图
 library(dplyr)    # 数据处理
+library(ggforce)
 
 # 2. 设置文件路径 (请将文件放在工作目录下，或写完整路径)
 meta_file <- "./h1.xlsx"   # 包含 Site 和 Group 信息
